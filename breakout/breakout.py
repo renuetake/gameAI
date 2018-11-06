@@ -10,7 +10,7 @@ SCR_RECT = Rect(0, 0, 372, 384)
 def main():
     pygame.init()
     screen = pygame.display.set_mode(SCR_RECT.size)
-    pygame.display.set_caption(u"Breakout 06 スコアの表示")
+    pygame.display.set_caption(u"Breakout")
 
 
     # スプライトグループを作成して登録
@@ -55,8 +55,17 @@ class Paddle(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self, self.containers)
         self.image, self.rect = load_image("paddle.png")
         self.rect.bottom = SCR_RECT.bottom  # パドルは画面の一番下
+        self.rect.centerx = 185
     def update(self):
-        self.rect.centerx = pygame.mouse.get_pos()[0]  # パドルの中央のX座標=マウスのX座標
+        vx = 5 # キーを押した時の移動距離
+        # 押されているキーをチェック
+        pressed_keys = pygame.key.get_pressed()
+        # 押されているキーに応じて画像を移動
+        if pressed_keys[K_LEFT]:
+            self.rect.move_ip(-vx, 0)
+        if pressed_keys[K_RIGHT]:
+            self.rect.move_ip(vx, 0)
+
         self.rect.clamp_ip(SCR_RECT)  # SCR_RECT内でしか移動できなくなる
 
 class Ball(pygame.sprite.Sprite):
@@ -78,8 +87,8 @@ class Ball(pygame.sprite.Sprite):
         # パドルの中央に配置
         self.rect.centerx = self.paddle.rect.centerx
         self.rect.bottom = self.paddle.rect.top
-        # 左クリックで移動開始
-        if pygame.mouse.get_pressed()[0] == 1:
+        # スペースキーで開始
+        if pygame.key.get_pressed()[K_SPACE] == 1:
             self.dx = 0
             self.dy = -self.speed
             # update()をmove()に置き換え
