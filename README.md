@@ -20,7 +20,7 @@ $ docker stop game_ai_01
 $ docker start game_ai_01
 ```
 
-Dockerで実行を行う
+Dockerで実行を行う
 ```
 # python実行
 $ docker exec -ti game_ai_01 python <filename.py>
