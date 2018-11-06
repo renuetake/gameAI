@@ -127,7 +127,7 @@ class Ball(pygame.sprite.Sprite):
             self.update = self.start  # ボールを初期状態に
             # ボールを落としたら-30点
             self.hit = 0
-            self.score_board.add_score(-30)
+            self.score_board.init_score()
         # ブロックを壊す
         # ボールと衝突したブロックリストを取得
         bricks_collided = pygame.sprite.spritecollide(self, self.bricks, True)
@@ -172,6 +172,9 @@ class ScoreBoard():
         x = (SCR_RECT.size[0] - score_img.get_width()) / 2
         y = (SCR_RECT.size[1] - score_img.get_height()) / 2
         screen.blit(score_img, (x, y))
+    def init_score(self):
+        self.score = 0
+    
     def add_score(self, x):
         self.score += x
 
