@@ -1,59 +1,130 @@
-#!/usr/bin/env python
+#! /usr/bin/env python
+#coding: utf-8
 import pygame
 from pygame.locals import *
-import math
 import os
+import random
 import sys
+import math
+import pyautogui
 
+START, PLAY, GAMEOVER = (0, 1, 2) # ゲーム状態
 SCR_RECT = Rect(0, 0, 372, 384)
+SC_NUM = 0
 
-def main():
-    pygame.init()
-    screen = pygame.display.set_mode(SCR_RECT.size)
-    pygame.display.set_caption(u"Breakout")
+class BreakOut:
+    def __init__(self):
+        pygame.init()
+        screen = pygame.display.set_mode(SCR_RECT.size)
+        pygame.display.set_caption(u"BREAK OUT")
+        # 素材のロード
+        self.load_images()
 
+        # ゲームオブジェクトを初期化
+        self.init_game()
+        # メインループ開始
+        clock = pygame.time.Clock()
+        # スクリーンショットの間隔制御のためのClock開始
+        pygame.time.set_timer(pygame.USEREVENT, 1000)
+        while True:
+                clock.tick(30)
+                self.update()
+                self.draw(screen)
+                pygame.display.update()
+                self.key_handler()
+                self.get_ball_pos()
+    def init_game(self):
+        """ ゲームオブジェクトを初期化 """
+        # ゲーム状態
+        self.game_state = START
+        # スプライトグループを作成して登録
+        self.all = pygame.sprite.RenderUpdates()
+        self.bricks = pygame.sprite.Group()  # 衝突判定用グループ
+        # デフォルトスプライトグループを登録
+        Paddle.containers = self.all
+        Ball.containers = self.all
+        Brick.containers = self.all, self.bricks
 
-    # スプライトグループを作成して登録
-    all = pygame.sprite.RenderUpdates()  # 描画用グループ
-    bricks = pygame.sprite.Group()       # 衝突判定用グループ
-    Paddle.containers = all
-    Ball.containers = all
-    Brick.containers = all, bricks
+        # パドルを作成
+        self.paddle = Paddle()
 
-    # パドル
-    paddle = Paddle()
-    # ブロックを作成
-    # 自動的にbricksグループに追加される
-    for x in range(1, 11):  # 1列から10列まで
-        for y in range(1, 6):  # 1行から5行まで
-            Brick(x, y)
-    # スコアボードを作成
-    score_board = ScoreBoard()
-    # ボールを作成
-    Ball(paddle, bricks, score_board)
+        # ブロックを作成
+        # 自動的にbricksグループに追加される
+        for x in range(1, 11):
+            for y in range(1, 6):
+                Brick(x, y)
+        # スコアボードを作成
+        self.score_board = ScoreBoard()
+        # ボールを作成
+        self.ball = Ball(self.paddle, self.bricks, self.score_board)
 
-    clock = pygame.time.Clock()
-    while True:
-        clock.tick(60)
-        screen.fill((0,0,0))
-        all.update()
-        all.draw(screen)
-        score_board.draw(screen)  # スコアボードを描画
-        pygame.display.update()
+    def update(self):
+        """ ゲーム状態の更新 """
+        if self.game_state == PLAY:
+            self.all.update()
+    
+    def draw(self, screen):
+        """ 描画 """
+        screen.fill((0, 0, 0))
+        if self.game_state == START:
+            # タイトルを描画
+            title_font = pygame.font.SysFont(None, 30)
+            title = title_font.render("BREAKOUT GAME", False, (255, 0, 0))
+            screen.blit(title, ((SCR_RECT.width-title.get_width())/2, 100))
+            # PUSH STARTを描画
+            push_font = pygame.font.SysFont(None, 20)
+            push_space = push_font.render("PUSH SPACE KEY", False, (255,255,255))
+            screen.blit(push_space, ((SCR_RECT.width-push_space.get_width())/2, 300))
+        elif self.game_state == PLAY:  # ゲームプレイ画面
+            self.all.draw(screen)
+        elif self.game_state == GAMEOVER:  # ゲームオーバー画面
+            # GAME OVERを描画
+            gameover_font = pygame.font.SysFont(None, 40)
+            gameover = gameover_font.render("GAME OVER", False, (255,0,0))
+            screen.blit(gameover, ((SCR_RECT.width-gameover.get_width())/2, 100))
+            # PUSH STARTを描画
+            push_font = pygame.font.SysFont(None, 20)
+            push_space = push_font.render("PUSH SPACE KEY", False, (255,255,255))
+            screen.blit(push_space, ((SCR_RECT.width-push_space.get_width())/2, 300))
+
+    def key_handler(self):
+        """キーハンドラー"""
         for event in pygame.event.get():
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
-            if event.type == KEYDOWN and event.key == K_ESCAPE:
+            elif event.type == KEYDOWN and event.key == K_ESCAPE:
                 pygame.quit()
                 sys.exit()
+            elif event.type == KEYDOWN and event.key == K_SPACE:
+                if self.game_state == START:  # スタート画面でスペースを押したとき
+                    self.game_state = PLAY
+                elif self.game_state == GAMEOVER:  # ゲームオーバー画面でスペースを押したとき
+                    self.init_game()  # ゲームを初期化して再開
+                    self.game_state = PLAY
+
+    def load_images(self):
+        Paddle.image = load_image('paddle.png')
+        Ball.image = load_image('ball.png')
+        Brick.image = load_image('brick.png')
+
+    def get_ball_pos(self):
+        # ボールの位置を取得して下に落ちていたらgame_stateをGAMEOVERにする
+        if self.ball.rect.top > SCR_RECT.bottom:
+            self.game_state = GAMEOVER
+
+    def get_screenshot(self):
+        global SC_NUM
+        sc = pyautogui.screenshot(region=(100, 200, 300, 400))
+        sc.save('screenshot/screenshot{}.png'.format(SC_NUM))
+        SC_NUM += 1
 
 class Paddle(pygame.sprite.Sprite):
     """ボールを打つパドル"""
     def __init__(self):
-        # containersはmain()でセットされる
+        # imageとcontainersはmain()でセットされる
         pygame.sprite.Sprite.__init__(self, self.containers)
-        self.image, self.rect = load_image("paddle.png")
+        self.rect = self.image.get_rect()
         self.rect.bottom = SCR_RECT.bottom  # パドルは画面の一番下
         self.rect.centerx = 185
     def update(self):
@@ -75,7 +146,7 @@ class Ball(pygame.sprite.Sprite):
     angle_right = 45
     def __init__(self, paddle, bricks, score_board):
         pygame.sprite.Sprite.__init__(self, self.containers)
-        self.image, self.rect = load_image("ball.png")
+        self.rect = self.image.get_rect()
         self.dx = self.dy = 0  # ボールの速度
         self.paddle = paddle  # パドルへの参照
         self.bricks = bricks  # ブロックグループへの参照
@@ -128,6 +199,7 @@ class Ball(pygame.sprite.Sprite):
             # ボールを落としたら-30点
             self.hit = 0
             self.score_board.init_score()
+            BreakOut.game_state = GAMEOVER
         # ブロックを壊す
         # ボールと衝突したブロックリストを取得
         bricks_collided = pygame.sprite.spritecollide(self, self.bricks, True)
@@ -153,11 +225,14 @@ class Ball(pygame.sprite.Sprite):
                 # 点数を追加
                 self.hit += 1
                 self.score_board.add_score(self.hit * 10)
+    
+    def ret_ball_pos(self):
+        return self.rect
 
 class Brick(pygame.sprite.Sprite):
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self, self.containers)
-        self.image, self.rect = load_image("brick.png")
+        self.rect = self.image.get_rect()
         # ブロックの位置を更新
         self.rect.left = SCR_RECT.left + x * self.rect.width
         self.rect.top = SCR_RECT.top + y * self.rect.height
@@ -178,9 +253,10 @@ class ScoreBoard():
     def add_score(self, x):
         self.score += x
 
+
 def load_image(filename, colorkey=None):
     """画像をロードして画像と矩形を返す"""
-    filename = os.path.join("data", filename)
+    filename = os.path.join("breakout/data", filename)
     try:
         image = pygame.image.load(filename)
     except pygame.error as message:
@@ -191,7 +267,7 @@ def load_image(filename, colorkey=None):
         if colorkey is -1:
             colorkey = image.get_at((0,0))
         image.set_colorkey(colorkey, RLEACCEL)
-    return image, image.get_rect()
+    return image
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    BreakOut()
