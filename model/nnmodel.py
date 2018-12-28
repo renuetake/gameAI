@@ -1,25 +1,24 @@
 import tensorflow as tf
 from nnconfig import *
 
-
-"""
-inference
-    モデルの定義と計算
-
-Inputs
-----------
-x : tensor tf.float32 [BATCH_SIZE, IMAGE * IMAGE * フレーム数]
-    入力データ
-
-keep_prob : tensor tf.float32
-    ドロップアウト率
-
-Outputs
-----------
-y : tensor tf.float32 [BATCH_SIZE, 行動数]
-    現在のNNの重みで出力したQ値
-"""
 def inference(x, keep_prob):
+    """
+    inference
+        モデルの定義と計算
+
+    Inputs
+    ----------
+    x : tensor tf.float32 [BATCH_SIZE, IMAGE * IMAGE * フレーム数]
+        入力データ
+
+    keep_prob : tensor tf.float32
+        ドロップアウト率
+
+    Outputs
+    ----------
+    y : tensor tf.float32 [BATCH_SIZE, 行動数]
+        現在のNNの重みで出力したQ値
+    """
     # 重みを標準偏差0.1の正規分布で初期化する
     def weight_variable(shape):
         initial = tf.truncated_normal(shape, stddev=0.1)
@@ -99,42 +98,42 @@ def inference(x, keep_prob):
 
     return y
 
-"""
-loss
-    期待されるQ値と現在のQ値との最小2乗誤差を出力
-
-Inputs
-----------
-y : tensor tf.float32 [ミニバッチ数, 行動数]
-    現在のNNの重みで出力したQ値
-
-t : tensor tf.float32 [ミニバッチ数, 行動数]
-    教師データ(このQ値を出力させたい)
-
-Outputs
-----------
-loss_values : tensor tf.float32 [BATCH_SIZE, 行動数]
-    各現在のQ値に対しての誤差
-"""
 def loss(y, t):
+    """
+    loss
+        期待されるQ値と現在のQ値との最小2乗誤差を出力
+
+    Inputs
+    ----------
+    y : tensor tf.float32 [ミニバッチ数, 行動数]
+        現在のNNの重みで出力したQ値
+
+    t : tensor tf.float32 [ミニバッチ数, 行動数]
+        教師データ(このQ値を出力させたい)
+
+    Outputs
+    ----------
+    loss_values : tensor tf.float32 [BATCH_SIZE, 行動数]
+        各現在のQ値に対しての誤差
+    """
     loss_values = tf.square(t - y) / 2
     return loss_values
 
-"""
-training
-    誤差を最小にするように重みを変更
-
-Inputs
-----------
-loss_values : tensor tf.float32 [BATCH_SIZE, 行動数]
-    各現在のQ値に対しての誤差
-
-Outputs
-----------
-tf.train.AdamOptimizer(LEARNING_RATE).minimize(loss_values) : よくわからない
-    ドキュメントリンク : https://www.tensorflow.org/api_docs/python/tf/train/AdamOptimizer
-    An Operation that updates the variables in var_list. If global_step was not None, that operation also increments global_step.
-"""
 def training(loss_values):
+    """
+    training
+        誤差を最小にするように重みを変更
+
+    Inputs
+    ----------
+    loss_values : tensor tf.float32 [BATCH_SIZE, 行動数]
+        各現在のQ値に対しての誤差
+
+    Outputs
+    ----------
+    tf.train.AdamOptimizer(LEARNING_RATE).minimize(loss_values) : よくわからない
+        ドキュメントリンク : https://www.tensorflow.org/api_docs/python/tf/train/AdamOptimizer
+        An Operation that updates the variables in var_list. If global_step was not None, that operation also increments global_step.
+    """
     # 勾配降下アルゴリズム(Adam)を用いて誤差を最小化する
     return tf.train.AdamOptimizer(LEARNING_RATE).minimize(loss_values)

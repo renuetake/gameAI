@@ -6,27 +6,27 @@ import nnmodel
 import nnhelper
 from nnconfig import *
 
-"""
-make_mini_batch_list
-    ミニバッチを生成する
-
-Inputs
-----------
-all_input_paths : list string [None(画像の数), フレーム数]
-    学習に使う全ての状態ごとの各画像のpathが格納されている
-
-rewards : list float [None(画像の数)]
-    all_input_pathsと対になりその報酬が格納されている
-
-initialize : bool
-    モデルの初期化を行うかどうか, Trueならば行う
-
-Outputs
-----------
-mini_batch_list : list [ミニバッチ数, BATCH_SIZE, 2(入力データ np.array np.float32 [IMAGE_SIZE * IMAGE_SIZE * フレーム数], 教師データ np.array np.float32 [ACTION_NUM])]
-    ミニバッチのリスト, 入力と教師データの対がバッチサイズごとにまとめられて, さらにそれらをリストでラップしている
-"""
 def make_mini_batch_list(all_input_paths, rewards, initialize):
+    """
+    make_mini_batch_list
+        ミニバッチを生成する
+
+    Inputs
+    ----------
+    all_input_paths : list string [None(画像の数), フレーム数]
+        学習に使う全ての状態ごとの各画像のpathが格納されている
+
+    rewards : list float [None(画像の数)]
+        all_input_pathsと対になりその報酬が格納されている
+
+    initialize : bool
+        モデルの初期化を行うかどうか, Trueならば行う
+
+    Outputs
+    ----------
+    mini_batch_list : list [ミニバッチ数, BATCH_SIZE, 2(入力データ np.array np.float32 [IMAGE_SIZE * IMAGE_SIZE * フレーム数], 教師データ np.array np.float32 [ACTION_NUM])]
+        ミニバッチのリスト, 入力と教師データの対がバッチサイズごとにまとめられて, さらにそれらをリストでラップしている
+    """
     mini_batch_list = []
     mini_batch = []
     for t in range(len(all_input_paths) - 1):
@@ -43,27 +43,27 @@ def make_mini_batch_list(all_input_paths, rewards, initialize):
         
     return mini_batch_list
 
-"""
-train
-    学習を行う
-
-Inputs
-----------
-all_input_paths : list string [None(画像の数), フレーム数]
-    学習に使う全ての状態ごとの各画像のpathが格納されている
-
-rewards : list float [None(画像の数)]
-    all_input_pathsと対になりその報酬が格納されている
-
-initialize : bool
-    default : False
-    モデルの初期化を行うかどうか, Trueならば行う
-
-Outputs
-----------
-    なし
-"""
 def train(all_input_paths, rewards, initialize=False):
+    """
+    train
+        学習を行う
+
+    Inputs
+    ----------
+    all_input_paths : list string [None(画像の数), フレーム数]
+        学習に使う全ての状態ごとの各画像のpathが格納されている
+
+    rewards : list float [None(画像の数)]
+        all_input_pathsと対になりその報酬が格納されている
+
+    initialize : bool
+        default : False
+        モデルの初期化を行うかどうか, Trueならば行う
+
+    Outputs
+    ----------
+        なし
+    """
 
     with tf.Graph().as_default():
         # dropout率
