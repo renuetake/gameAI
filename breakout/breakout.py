@@ -2,12 +2,14 @@
 #coding: utf-8
 import pygame
 from pygame.locals import *
+import numpy as np
 import os
 import random
 import sys
 import math
-import pyautogui
 
+
+np.set_printoptions(threshold=np.inf)
 START, PLAY, GAMEOVER = (0, 1, 2) # ゲーム状態
 SCR_RECT = Rect(0, 0, 372, 384)
 SC_NUM = 0
@@ -25,14 +27,15 @@ class BreakOut:
         # メインループ開始
         clock = pygame.time.Clock()
         # スクリーンショットの間隔制御のためのClock開始
-        pygame.time.set_timer(pygame.USEREVENT, 1000)
+        pygame.time.set_timer(pygame.USEREVENT, 30)
         while True:
-                clock.tick(30)
+                clock.tick(60)
                 self.update()
                 self.draw(screen)
                 pygame.display.update()
                 self.key_handler()
                 self.get_ball_pos()
+
     def init_game(self):
         """ ゲームオブジェクトを初期化 """
         # ゲーム状態
@@ -102,6 +105,9 @@ class BreakOut:
                 elif self.game_state == GAMEOVER:  # ゲームオーバー画面でスペースを押したとき
                     self.init_game()  # ゲームを初期化して再開
                     self.game_state = PLAY
+            # 一定時間毎に画面情報を取得
+            if event.type == USEREVENT:
+                image = self.get_image()
 
     def load_images(self):
         Paddle.image = load_image('paddle.png')
@@ -113,11 +119,15 @@ class BreakOut:
         if self.ball.rect.top > SCR_RECT.bottom:
             self.game_state = GAMEOVER
 
-    def get_screenshot(self):
-        global SC_NUM
-        sc = pyautogui.screenshot(region=(100, 200, 300, 400))
-        sc.save('screenshot/screenshot{}.png'.format(SC_NUM))
-        SC_NUM += 1
+    def get_image(self):
+
+        # ディスプレイの情報を3次元で取得
+        image = pygame.surfarray.array3d(pygame.display.get_surface())
+        # 中間値法によるグレースケール
+        image = np.max(image, axis = 2)/2 +np.min(image, axis = 2)/2
+        # 実際のゲーム画面と同様にパドルが下、ブロックが上に配置するように返す。
+        return image.T
+
 
 class Paddle(pygame.sprite.Sprite):
     """ボールを打つパドル"""
