@@ -6,7 +6,7 @@ import nnmodel
 import nnhelper
 from nnconfig import *
 
-def make_mini_batch_list(all_input_paths, rewards, initialize):
+def make_mini_batch_list(all_input_paths, rewards):
     """
     make_mini_batch_list
         ミニバッチを生成する
@@ -19,9 +19,6 @@ def make_mini_batch_list(all_input_paths, rewards, initialize):
     rewards : list float [None(画像の数)]
         all_input_pathsと対になりその報酬が格納されている
 
-    initialize : bool
-        モデルの初期化を行うかどうか, Trueならば行う
-
     Outputs
     ----------
     mini_batch_list : list [ミニバッチ数, BATCH_SIZE, 2(入力データ np.array np.float32 [IMAGE_SIZE * IMAGE_SIZE * フレーム数], 教師データ np.array np.float32 [ACTION_NUM])]
@@ -32,7 +29,7 @@ def make_mini_batch_list(all_input_paths, rewards, initialize):
     for t in range(len(all_input_paths) - 1):
         s_t0 = nnhelper.images2array(all_input_paths[t])
         s_t1 = nnhelper.images2array(all_input_paths[t + 1])
-        q_next = nn.get_qvalues(s_t1, initialize)
+        q_next = nn.get_qvalues(s_t1)
         mask = np.zeros(CLASS_NUM)
         mask[q_next.argmax] = 1
         expQ = (mask * rewards[t]) + (mask * GAMMA) * q_next
@@ -43,7 +40,7 @@ def make_mini_batch_list(all_input_paths, rewards, initialize):
         
     return mini_batch_list
 
-def train(all_input_paths, rewards, initialize=False):
+def train(all_input_paths, rewards):
     """
     train
         学習を行う
@@ -55,10 +52,6 @@ def train(all_input_paths, rewards, initialize=False):
 
     rewards : list float [None(画像の数)]
         all_input_pathsと対になりその報酬が格納されている
-
-    initialize : bool
-        default : False
-        モデルの初期化を行うかどうか, Trueならば行う
 
     Outputs
     ----------
@@ -81,22 +74,21 @@ def train(all_input_paths, rewards, initialize=False):
 
         # 保存の準備
         saver = tf.train.Saver()
-        # セッションの作成
-        sess = tf.Session()
-        # セッションの開始及び初期化
-        sess.run(tf.global_variables_initializer())
+        
+        with tf.Session() as sess:
+            saver.restore(sess, CHECKPOINT)
 
-        # 学習
-        for epoch in range(EPOCH_SIZE):
-            # バッチ生成
-            mini_batch_list = make_mini_batch_list(all_input_paths, rewards, initialize=initialize)
-            random.shuffle(mini_batch_list)
-            for mini_batch in mini_batch_list:
-                # 状態sで期待されるQ値expected_qvaluesが出力されるように重みを調整
-                sess.run(train_step, feed_dict={x: mini_batch[0], t: mini_batch[1], keep_prob: 0.5})
-                # 1epoch毎に学習データに対して精度を出す
-                # train_loss = sess.run(loss_values, feed_dict={x: batch[0], t: batch[1], keep_prob: 1.0})
-                # print(f'[epoch {epoch+1:02d}] oss={train_loss:12.10f}')
+            # 学習
+            for epoch in range(EPOCH_SIZE):
+                # バッチ生成
+                mini_batch_list = make_mini_batch_list(all_input_paths, rewards)
+                random.shuffle(mini_batch_list)
+                for mini_batch in mini_batch_list:
+                    # 状態sで期待されるQ値expected_qvaluesが出力されるように重みを調整
+                    sess.run(train_step, feed_dict={x: mini_batch[0], t: mini_batch[1], keep_prob: 0.5})
+                    # 1epoch毎に学習データに対して精度を出す
+                    # train_loss = sess.run(loss_values, feed_dict={x: batch[0], t: batch[1], keep_prob: 1.0})
+                    # print(f'[epoch {epoch+1:02d}] oss={train_loss:12.10f}')
 
-        # 完成したモデルを保存する
-        saver.save(sess, CHECKPOINT)
+            # 完成したモデルを保存する
+            saver.save(sess, CHECKPOINT)
