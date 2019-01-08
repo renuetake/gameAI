@@ -14,4 +14,6 @@ GAMMA = 0.1
 
 IMAGES_PATH = 'capture-images/'
 
-CHECKPOINT = './checkpoint/model.ckpt'
+CHECKPOINT_PATH = './checkpoint/'
+CHECKPOINT_FILENAME = 'model.ckpt'
+CHECKPOINT = CHECKPOINT_PATH + CHECKPOINT_FILENAME

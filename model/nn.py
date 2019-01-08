@@ -4,7 +4,7 @@ import nnhelper
 import nnmodel
 from nnconfig import *
 
-def get_qvalues(image_paths, initialize=False):
+def get_qvalues(image_paths):
     """
     get_qvalues
         Inputで受け取ったパスの画像を状態とした時のQ値を出力する
@@ -13,10 +13,6 @@ def get_qvalues(image_paths, initialize=False):
     ----------
     image_paths : list string [フレーム数]
         状態となる各画像のpathが格納されている
-
-    initialize : bool
-        default : False
-        モデルの初期化を行うかどうか, Trueならば行う
 
     Outputs
     ----------
@@ -39,10 +35,15 @@ def get_qvalues(image_paths, initialize=False):
         sess.run(tf.global_variables_initializer())
 
         # モデルの読み込み
-        if initialize == True:
-            saver.restore(sess, CHECKPOINT)
-
-        # 実行
-        qvalues = sess.run(y)
+        with tf.Session() as sess:
+            ckpt = tf.train.get_checkpoint_state(CHECKPOINT_PATH)
+            if ckpt:
+                saver.restore(sess, CHECKPOINT)
+            else:
+                init = tf.initialize_all_variables()
+                sess.run(init)
+            
+            # 実行
+            qvalues = sess.run(y)
 
         return qvalues
