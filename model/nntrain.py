@@ -6,18 +6,18 @@ import nnmodel
 import nnhelper
 from nnconfig import *
 
-def make_mini_batch_list(all_input_paths, rewards):
+def make_mini_batch_list(states, rewards):
     """
     make_mini_batch_list
         ミニバッチを生成する
 
     Inputs
     ----------
-    all_input_paths : list string [None(画像の数), フレーム数]
-        学習に使う全ての状態ごとの各画像のpathが格納されている
+    states : np.array float [None(状態数), フレーム数, width, height]
+        学習に使う全ての状態ごとの各画像のnp.arrayが格納されている
 
-    rewards : list float [None(画像の数)]
-        all_input_pathsと対になりその報酬が格納されている
+    rewards : list float [None(状態数)]
+        statesと対になりその報酬が格納されている
 
     Outputs
     ----------
@@ -26,9 +26,9 @@ def make_mini_batch_list(all_input_paths, rewards):
     """
     mini_batch_list = []
     mini_batch = []
-    for t in range(len(all_input_paths) - 1):
-        s_t0 = nnhelper.images2array(all_input_paths[t])
-        s_t1 = nnhelper.images2array(all_input_paths[t + 1])
+    for t in range(states.shape[0] - 1):
+        s_t0 = nnhelper.resize_images(states[t])
+        s_t1 = nnhelper.resize_images(states[t + 1])
         q_next = nn.get_qvalues(s_t1)
         mask = np.zeros(CLASS_NUM)
         mask[q_next.argmax] = 1
@@ -40,18 +40,18 @@ def make_mini_batch_list(all_input_paths, rewards):
         
     return mini_batch_list
 
-def train(all_input_paths, rewards):
+def train(states, rewards):
     """
     train
         学習を行う
 
     Inputs
     ----------
-    all_input_paths : list string [None(画像の数), フレーム数]
-        学習に使う全ての状態ごとの各画像のpathが格納されている
+    states : np.array float [None(状態数), フレーム数, width, hight]
+        学習に使う全ての状態ごとの各画像のnp.arrayが格納されている
 
-    rewards : list float [None(画像の数)]
-        all_input_pathsと対になりその報酬が格納されている
+    rewards : list float [None(状態数)]
+        statesと対になりその報酬が格納されている
 
     Outputs
     ----------
@@ -81,7 +81,7 @@ def train(all_input_paths, rewards):
             # 学習
             for epoch in range(EPOCH_SIZE):
                 # バッチ生成
-                mini_batch_list = make_mini_batch_list(all_input_paths, rewards)
+                mini_batch_list = make_mini_batch_list(states, rewards)
                 random.shuffle(mini_batch_list)
                 for mini_batch in mini_batch_list:
                     # 状態sで期待されるQ値expected_qvaluesが出力されるように重みを調整

@@ -4,15 +4,15 @@ import nnhelper
 import nnmodel
 from nnconfig import *
 
-def get_qvalues(image_paths):
+def get_qvalues(image_arrays):
     """
     get_qvalues
         Inputで受け取ったパスの画像を状態とした時のQ値を出力する
 
     Inputs
     ----------
-    image_paths : list string [フレーム数]
-        状態となる各画像のpathが格納されている
+    image_arrays : np.array float [フレーム数, width, hight]
+        状態となる各画像がnp.arrayで格納されている
 
     Outputs
     ----------
@@ -20,7 +20,7 @@ def get_qvalues(image_paths):
         各行動のQ値
     """
     # 画像の準備(状態)
-    s_t = nnhelper.images2array(image_paths)
+    s_t = nnhelper.resize_images(image_arrays)
 
     with tf.Graph().as_default():
         # Q値の算出
