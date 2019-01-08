@@ -29,10 +29,6 @@ def get_qvalues(image_paths):
 
         # 保存の準備
         saver = tf.train.Saver()
-        # セッションの作成
-        sess = tf.Session()
-        # セッションの開始及び初期化
-        sess.run(tf.global_variables_initializer())
 
         # モデルの読み込み
         with tf.Session() as sess:
@@ -42,6 +38,7 @@ def get_qvalues(image_paths):
             else:
                 init = tf.initialize_all_variables()
                 sess.run(init)
+                saver.save(sess, CHECKPOINT)
             
             # 実行
             qvalues = sess.run(y)

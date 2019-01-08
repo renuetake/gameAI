@@ -74,22 +74,21 @@ def train(all_input_paths, rewards):
 
         # 保存の準備
         saver = tf.train.Saver()
-        # セッションの作成
-        sess = tf.Session()
-        # セッションの開始及び初期化
-        sess.run(tf.global_variables_initializer())
+        
+        with tf.Session() as sess:
+            saver.restore(sess, CHECKPOINT)
 
-        # 学習
-        for epoch in range(EPOCH_SIZE):
-            # バッチ生成
-            mini_batch_list = make_mini_batch_list(all_input_paths, rewards)
-            random.shuffle(mini_batch_list)
-            for mini_batch in mini_batch_list:
-                # 状態sで期待されるQ値expected_qvaluesが出力されるように重みを調整
-                sess.run(train_step, feed_dict={x: mini_batch[0], t: mini_batch[1], keep_prob: 0.5})
-                # 1epoch毎に学習データに対して精度を出す
-                # train_loss = sess.run(loss_values, feed_dict={x: batch[0], t: batch[1], keep_prob: 1.0})
-                # print(f'[epoch {epoch+1:02d}] oss={train_loss:12.10f}')
+            # 学習
+            for epoch in range(EPOCH_SIZE):
+                # バッチ生成
+                mini_batch_list = make_mini_batch_list(all_input_paths, rewards)
+                random.shuffle(mini_batch_list)
+                for mini_batch in mini_batch_list:
+                    # 状態sで期待されるQ値expected_qvaluesが出力されるように重みを調整
+                    sess.run(train_step, feed_dict={x: mini_batch[0], t: mini_batch[1], keep_prob: 0.5})
+                    # 1epoch毎に学習データに対して精度を出す
+                    # train_loss = sess.run(loss_values, feed_dict={x: batch[0], t: batch[1], keep_prob: 1.0})
+                    # print(f'[epoch {epoch+1:02d}] oss={train_loss:12.10f}')
 
-        # 完成したモデルを保存する
-        saver.save(sess, CHECKPOINT)
+            # 完成したモデルを保存する
+            saver.save(sess, CHECKPOINT)
